@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFFGRID — Archive Resale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0A0A0A;
+    --white: #F2F0EB;
+    --acid: #C8FF00;
+    --red: #FF2D2D;
+    --gray: #1C1C1C;
+    --mid: #3A3A3A;
+    --muted: #888;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: crosshair;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.35;
+  }
+
+  /* ── MARQUEE ── */
+  .ticker {
+    background: var(--acid);
+    color: var(--black);
+    padding: 7px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 22s linear infinite;
+  }
+  .ticker-inner span { margin: 0 32px; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--mid);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 0.06em;
+    color: var(--white);
+    text-decoration: none;
+    line-height: 1;
+  }
+  .logo span { color: var(--acid); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--acid); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .nav-tag {
+    border: 1px solid var(--mid);
+    padding: 5px 12px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 88vh;
+    border-bottom: 1px solid var(--mid);
+  }
+
+  .hero-left {
+    padding: 64px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid var(--mid);
+  }
+
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(80px, 10vw, 140px);
+    line-height: 0.88;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-title .accent { color: var(--acid); display: block; }
+  .hero-title .stroke {
+    -webkit-text-stroke: 1px var(--white);
+    color: transparent;
+    display: block;
+  }
+
+  .hero-bottom {
+    display: flex;
+    gap: 40px;
+    align-items: flex-end;
+    margin-top: 48px;
+  }
+
+  .hero-stat { }
+  .hero-stat .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: var(--acid);
+    line-height: 1;
+  }
+  .hero-stat .label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .hero-right {
+    position: relative;
+    overflow: hidden;
+    background: var(--gray);
+  }
+
+  .hero-visual {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-visual::before {
+    content: 'ARCHIVE\ANEW DROPS\ASEASON 01';
+    white-space: pre;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 0.9;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.04);
+    position: absolute;
+    top: 40px;
+    left: 40px;
+  }
+
+  .hero-img-placeholder {
+    width: 260px;
+    height: 360px;
+    border: 1px solid var(--mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-img-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border: 1px solid var(--mid);
+  }
+
+  .hero-img-inner {
+    text-align: center;
+  }
+  .hero-img-inner .brand-tag {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.1em;
+    display: block;
+    color: var(--white);
+  }
+  .hero-img-inner .item-tag {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    display: block;
+    margin-top: 8px;
+  }
+
+  .hero-badge {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    background: var(--acid);
+    color: var(--black);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 8px 16px;
+    text-transform: uppercase;
+  }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid var(--mid);
+    overflow-x: auto;
+  }
+
+  .filter-bar-label {
+    padding: 16px 24px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-right: 1px solid var(--mid);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .filter-btn {
+    padding: 16px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-right: 1px solid var(--mid);
+    cursor: crosshair;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { color: var(--white); background: var(--gray); }
+  .filter-btn.active { color: var(--black); background: var(--acid); }
+
+  .filter-count {
+    margin-left: auto;
+    padding: 16px 24px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    border-left: 1px solid var(--mid);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── CATALOG GRID ── */
+  .catalog {
+    padding: 0;
+  }
+
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-left: 1px solid var(--mid);
+  }
+
+  .product-card {
+    border-right: 1px solid var(--mid);
+    border-bottom: 1px solid var(--mid);
+    cursor: crosshair;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-card:hover { background: var(--gray); }
+  .product-card:hover .card-cta { opacity: 1; transform: translateY(0); }
+  .product-card:hover .card-img-wrap::after { opacity: 1; }
+
+  .card-img-wrap {
+    aspect-ratio: 3/4;
+    background: var(--gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--mid);
+  }
+
+  .card-img-wrap::after {
+    content: 'VER PIEZA →';
+    position: absolute;
+    inset: 0;
+    background: rgba(200,255,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--acid);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .card-placeholder {
+    text-align: center;
+    padding: 24px;
+  }
+  .card-placeholder .brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    display: block;
+  }
+  .card-placeholder .item-code {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    display: block;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .card-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .card-info {
+    padding: 16px 20px;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .card-brand {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .card-condition {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid;
+  }
+  .card-condition.ds { border-color: var(--acid); color: var(--acid); }
+  .card-condition.uw { border-color: var(--muted); color: var(--muted); }
+  .card-condition.used { border-color: var(--red); color: var(--red); }
+
+  .card-name {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.04em;
+    color: var(--white);
+  }
+
+  .card-size {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .card-cta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--acid);
+    color: var(--black);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 10px;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+  }
+
+  /* ── SOLD TAG ── */
+  .sold-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,10,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .sold-tag {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.15em;
+    color: var(--red);
+    border: 2px solid var(--red);
+    padding: 6px 20px;
+    transform: rotate(-12deg);
+  }
+
+  /* ── ABOUT STRIP ── */
+  .about-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--mid);
+    border-bottom: 1px solid var(--mid);
+    margin-top: 0;
+  }
+
+  .about-left {
+    padding: 64px 40px;
+    border-right: 1px solid var(--mid);
+  }
+
+  .about-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--acid);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .about-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1.3;
+    color: var(--white);
+    max-width: 420px;
+  }
+
+  .about-text strong {
+    font-weight: 700;
+    color: var(--acid);
+  }
+
+  .about-right {
+    padding: 64px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-content: center;
+  }
+
+  .about-item .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: var(--white);
+    line-height: 1;
+  }
+  .about-item .desc {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ── BRANDS STRIP ── */
+  .brands-strip {
+    padding: 32px 40px;
+    border-bottom: 1px solid var(--mid);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .brands-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-right: 40px;
+    border-right: 1px solid var(--mid);
+    flex-shrink: 0;
+  }
+
+  .brands-scroll {
+    display: flex;
+    gap: 48px;
+    padding-left: 40px;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .brand-pill {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--mid);
+    white-space: nowrap;
+    transition: color 0.2s;
+    cursor: default;
+  }
+  .brand-pill:hover { color: var(--acid); }
+
+  /* ── CONTACT / FOOTER ── */
+  .contact-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px;
+    border-bottom: 1px solid var(--mid);
+  }
+
+  .contact-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  .contact-text span { color: var(--acid); }
+
+  .contact-links {
+    display: flex;
+    gap: 16px;
+  }
+
+  .contact-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border: 1px solid var(--mid);
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .contact-btn:hover { background: var(--white); color: var(--black); }
+  .contact-btn.primary { background: var(--acid); color: var(--black); border-color: var(--acid); }
+  .contact-btn.primary:hover { background: var(--white); border-color: var(--white); }
+
+  footer {
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-title { animation: fadeUp 0.7s ease both; }
+  .hero-eyebrow { animation: fadeUp 0.7s ease 0.1s both; }
+  .hero-bottom { animation: fadeUp 0.7s ease 0.2s both; }
+
+  .product-card {
+    animation: fadeUp 0.5s ease both;
+  }
+  .product-card:nth-child(1) { animation-delay: 0.05s; }
+  .product-card:nth-child(2) { animation-delay: 0.1s; }
+  .product-card:nth-child(3) { animation-delay: 0.15s; }
+  .product-card:nth-child(4) { animation-delay: 0.2s; }
+  .product-card:nth-child(5) { animation-delay: 0.25s; }
+  .product-card:nth-child(6) { animation-delay: 0.3s; }
+
+  /* hidden cards for filter */
+  .product-card.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span>OFFGRID ARCHIVE</span>
+    <span>★</span>
+    <span>STREETWEAR LUXURY RESALE</span>
+    <span>★</span>
+    <span>ENVÍOS A TODO EL PAÍS</span>
+    <span>★</span>
+    <span>PIEZAS VERIFICADAS</span>
+    <span>★</span>
+    <span>STOCK LIMITADO</span>
+    <span>★</span>
+    <span>OFFGRID ARCHIVE</span>
+    <span>★</span>
+    <span>STREETWEAR LUXURY RESALE</span>
+    <span>★</span>
+    <span>ENVÍOS A TODO EL PAÍS</span>
+    <span>★</span>
+    <span>PIEZAS VERIFICADAS</span>
+    <span>★</span>
+    <span>STOCK LIMITADO</span>
+    <span>★</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">OFF<span>GRID</span></a>
+  <ul class="nav-links">
+    <li><a href="#catalog">Catálogo</a></li>
+    <li><a href="#about">Nosotros</a></li>
+    <li><a href="#contact">Contacto</a></li>
+  </ul>
+  <div class="nav-right">
+    <span class="nav-tag">AR / Buenos Aires</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div>
+      <p class="hero-eyebrow">// Archive Resale — Temporada 01</p>
+      <h1 class="hero-title">
+        <span>OFF</span>
+        <span class="accent">GRID</span>
+        <span class="stroke">ARCHIVE</span>
+      </h1>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-stat">
+        <div class="num">120+</div>
+        <div class="label">Piezas en archivo</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">30+</div>
+        <div class="label">Marcas</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">100%</div>
+        <div class="label">Autenticidad</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-visual">
+      <div class="hero-img-placeholder">
+        <div class="card-grid-bg"></div>
+        <div class="hero-img-inner">
+          <span class="brand-name">STONE<br>ISLAND</span>
+          <span class="item-tag">Ghost Piece — AW2019</span>
+        </div>
+      </div>
+      <div class="hero-badge">NEW DROP — 12 PIEZAS</div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="catalog">
+  <span class="filter-bar-label">// Filtrar</span>
+  <button class="filter-btn active" data-filter="all">Todo</button>
+  <button class="filter-btn" data-filter="outerwear">Outerwear</button>
+  <button class="filter-btn" data-filter="tops">Tops</button>
+  <button class="filter-btn" data-filter="bottoms">Bottoms</button>
+  <button class="filter-btn" data-filter="accesorios">Accesorios</button>
+  <span class="filter-count" id="count-display">6 piezas</span>
+</div>
+
+<!-- CATALOG -->
+<section class="catalog">
+  <div class="catalog-grid" id="catalog-grid">
+
+    <!-- Card 1 -->
+    <div class="product-card" data-cat="outerwear">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="card-placeholder">
+          <span class="brand-name">STONE<br>ISLAND</span>
+          <span class="item-code">SI — AW2019 — REF 44231</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">Stone Island</span>
+          <span class="card-condition ds">DS</span>
+        </div>
+        <p class="card-name">Ghost Piece Soft Shell — Jacket Oliva</p>
+        <div class="card-bottom">
+          <span class="card-price">$480.000</span>
+          <span class="card-size">Talle L</span>
+        </div>
+      </div>
+      <button class="card-cta" onclick="contactItem('Stone Island Ghost Piece')">CONSULTAR POR WHATSAPP</button>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="product-card" data-cat="tops">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="card-placeholder">
+          <span class="brand-name">RAF<br>SIMONS</span>
+          <span class="item-code">RS — SS2022 — TEE</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">Raf Simons</span>
+          <span class="card-condition uw">UW</span>
+        </div>
+        <p class="card-name">SS2022 Destroyed Tee — Negro / Graphic Print</p>
+        <div class="card-bottom">
+          <span class="card-price">$180.000</span>
+          <span class="card-size">Talle M</span>
+        </div>
+      </div>
+      <button class="card-cta" onclick="contactItem('Raf Simons Destroyed Tee')">CONSULTAR POR WHATSAPP</button>
+    </div>
+
+    <!-- Card 3 - SOLD -->
+    <div class="product-card" data-cat="outerwear">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="sold-overlay">
+          <span class="sold-tag">VENDIDO</span>
+        </div>
+        <div class="card-placeholder">
+          <span class="brand-name">ARC'TERYX<br>VEILANCE</span>
+          <span class="item-code">ARC — FW2021 — JACKET</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">Arc'teryx Veilance</span>
+          <span class="card-condition ds">DS</span>
+        </div>
+        <p class="card-name">Mionn IS Jacket — Cobalt Blue</p>
+        <div class="card-bottom">
+          <span class="card-price" style="color:var(--muted)">VENDIDO</span>
+          <span class="card-size">Talle XL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="product-card" data-cat="bottoms">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="card-placeholder">
+          <span class="brand-name">WTAPS</span>
+          <span class="item-code">WT — SS2023 — CARGO</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">WTAPS</span>
+          <span class="card-condition uw">UW</span>
+        </div>
+        <p class="card-name">Jungle Stock Cargo Pants — Olive Drab</p>
+        <div class="card-bottom">
+          <span class="card-price">$220.000</span>
+          <span class="card-size">Talle 02</span>
+        </div>
+      </div>
+      <button class="card-cta" onclick="contactItem('WTAPS Jungle Stock Cargo')">CONSULTAR POR WHATSAPP</button>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="product-card" data-cat="accesorios">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="card-placeholder">
+          <span class="brand-name">SALEHE<br>BEMBURY</span>
+          <span class="item-code">SB — NEW BALANCE 2002R</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">New Balance × SB</span>
+          <span class="card-condition ds">DS</span>
+        </div>
+        <p class="card-name">2002R "Water Be The Guide" — Cream</p>
+        <div class="card-bottom">
+          <span class="card-price">$350.000</span>
+          <span class="card-size">US 10</span>
+        </div>
+      </div>
+      <button class="card-cta" onclick="contactItem('NB 2002R Salehe Bembury')">CONSULTAR POR WHATSAPP</button>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="product-card" data-cat="tops">
+      <div class="card-img-wrap">
+        <div class="card-grid-bg"></div>
+        <div class="card-placeholder">
+          <span class="brand-name">KAPITAL</span>
+          <span class="item-code">KP — SS2020 — KNITWEAR</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-top">
+          <span class="card-brand">Kapital</span>
+          <span class="card-condition used">USED</span>
+        </div>
+        <p class="card-name">Boro Reconstructed Knit Sweater — Multicolor</p>
+        <div class="card-bottom">
+          <span class="card-price">$160.000</span>
+          <span class="card-size">Talle 3</span>
+        </div>
+      </div>
+      <button class="card-cta" onclick="contactItem('Kapital Boro Knit Sweater')">CONSULTAR POR WHATSAPP</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- BRANDS STRIP -->
+<div class="brands-strip">
+  <span class="brands-label">// Marcas</span>
+  <div class="brands-scroll">
+    <span class="brand-pill">Stone Island</span>
+    <span class="brand-pill">Raf Simons</span>
+    <span class="brand-pill">Arc'teryx</span>
+    <span class="brand-pill">WTAPS</span>
+    <span class="brand-pill">Kapital</span>
+    <span class="brand-pill">Engineered Garments</span>
+    <span class="brand-pill">Needles</span>
+    <span class="brand-pill">Comme des Garçons</span>
+    <span class="brand-pill">Salehe Bembury</span>
+    <span class="brand-pill">Undercover</span>
+    <span class="brand-pill">Yohji Yamamoto</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section class="about-strip" id="about">
+  <div class="about-left">
+    <p class="about-label">// Sobre OFFGRID</p>
+    <p class="about-text">
+      No vendemos ropa.<br>
+      Vendemos <strong>archivo</strong>.<br><br>
+      Cada pieza pasa por un proceso de verificación de autenticidad antes de llegar a vos. <strong>Streetwear de lujo</strong>, piezas de temporadas pasadas y colaboraciones que ya no existen en el mercado primario.
+    </p>
+  </div>
+  <div class="about-right">
+    <div class="about-item">
+      <div class="num">100%</div>
+      <div class="desc">Piezas autenticadas</div>
+    </div>
+    <div class="about-item">
+      <div class="num">48hs</div>
+      <div class="desc">Respuesta garantizada</div>
+    </div>
+    <div class="about-item">
+      <div class="num">3+</div>
+      <div class="desc">Años de archivo</div>
+    </div>
+    <div class="about-item">
+      <div class="num">BSAS</div>
+      <div class="desc">Base de operaciones</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<div class="contact-bar" id="contact">
+  <div class="contact-text">¿TE INTERESA<br>UNA <span>PIEZA</span> ?</div>
+  <div class="contact-links">
+    <a href="https://instagram.com" class="contact-btn" target="_blank">Instagram</a>
+    <a href="https://wa.me/5491100000000?text=Hola OFFGRID, me interesa una pieza" class="contact-btn primary" target="_blank">WhatsApp →</a>
+  </div>
+</div>
+
+<footer>
+  <span>© 2025 OFFGRID — Archive Resale</span>
+  <span>Buenos Aires, Argentina</span>
+  <span>DS = Deadstock / UW = Unworn / Used = Con uso</span>
+</footer>
+
+<script>
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('.product-card');
+  const countDisplay = document.getElementById('count-display');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      let visible = 0;
+      cards.forEach(card => {
+        const match = filter === 'all' || card.dataset.cat === filter;
+        card.classList.toggle('hidden', !match);
+        if (match) visible++;
+      });
+      countDisplay.textContent = visible + ' pieza' + (visible !== 1 ? 's' : '');
+    });
+  });
+
+  function contactItem(name) {
+    const msg = encodeURIComponent('Hola OFFGRID! Me interesa la pieza: ' + name + '. ¿Está disponible?');
+    window.open('https://wa.me/5491100000000?text=' + msg, '_blank');
+  }
+</script>
+</body>
+</html>
